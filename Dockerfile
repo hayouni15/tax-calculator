@@ -1,9 +1,12 @@
 FROM node:16.15
 
-COPY ./package*.json ./app/
-ADD ./ /app
-
 WORKDIR /app
+
+COPY package*.json ./
+COPY . ./
+# ADD . /app
+
+
 RUN npm install
 
 EXPOSE 3000
