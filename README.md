@@ -2,7 +2,7 @@
 
 I introduce the solution to the Tax Calculator assignment.
 
-* [Tax Calculator](./api/tax_calculator/INSTRUCTIONS.md)
+* [Tax Calculator](https://github.com/Points/interview-test-server/blob/master/api/tax_calculator/INSTRUCTIONS.md)
 
 ## Getting started
 
