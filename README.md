@@ -8,7 +8,7 @@ I introduce the solution to the Tax Calculator assignment.
 
 **1-clone repo content**
 ```bash
-git@github.com:hayouni15/tax-calculator.git
+git clone git@github.com:hayouni15/tax-calculator.git
 ```
 **2- navifgate to tax-calculator**
 
