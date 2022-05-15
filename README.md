@@ -18,7 +18,7 @@ cd tax-calculator/
 **3-Start the app**
 
 ```bash
-./statApp.sh 
+./startApp.sh 
 ```
 
 if the app launchs successfully, you should see something similar to :
