@@ -1,27 +1,22 @@
-import { Container, Divider, Grid, TextField, Typography } from '@material-ui/core'
+import { Divider, Grid, TextField, Typography } from '@material-ui/core'
 import React, { useEffect } from 'react'
 import useStyle from './styles'
 import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
 import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import Stack from '@mui/material/Stack';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import { withStyles } from "@material-ui/core/styles";
-import InputAdornment from '@mui/material/InputAdornment';
 import { PieChart } from 'react-minimal-pie-chart';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
 import axios from "axios"
-const backEndHostName = 'localhost'
+import LoadingCircle from '../LoadingCircle/LoadingCircle';
+import { Alert, Snackbar } from '@mui/material';
+const settings = require('../../lib/settings.json')
+
 
 const StyledTextField = withStyles({
     root: {
@@ -46,19 +41,42 @@ const TaxSummary = () => {
     const classes = useStyle()
     const [year, setYear] = React.useState(2019);
     const [rates, setRates] = React.useState([])
+    const [summary, setSummary] = React.useState({})
+    const [loading, setLoading] = React.useState(true)
+    const [error, setError] = React.useState({ value: false })
 
+
+    // handle selecting a new year
     const handleYearChange = (event) => {
+        setLoading(true)
+        setError({
+            value: false
+        })
         setYear(event.target.value);
 
     };
+
+
+    // handle clicking calculate button
     const handleCalculate = () => {
-        console.log(year)
         let income = document.getElementById("income").value
-        console.log(document.getElementById("income").value)
-        parseRates()
+        let summary = {}
+        parseRates(parseInt(income)).then((rate) => {
+            if (rate) {
+                summary["rate"] = rate
+                summary["totalTax"] = Math.round(rate.rate * parseInt(income))
+                summary["grossIncome"] = parseInt(income)
+                summary["netPay"] = Math.round((1 - rate.rate) * parseInt(income))
+                setSummary(summary)
+            }
+
+        })
     }
+
+
+    // fetch all rates from API. this will set rates 
     const fetchRates = async () => {
-        let url = `http://${backEndHostName}:5000/tax-calculator/brackets`
+        let url = settings.API
         if (year) {
             url += `/${year}`
         }
@@ -69,58 +87,75 @@ const TaxSummary = () => {
         })
             .then(function (response) {
                 // handle success
-                console.log(response)
                 setRates(response.data.tax_brackets)
+                setLoading(false)
+                setError({
+                    value: false
+                })
             })
             .catch(function (Error) {
                 // handle error
                 console.log('There was an error to fetch rates', Error)
+                setError({
+                    value: true,
+                    reason: Error
+                })
             })
     }
 
-    const parseRates = (income) => {
-        console.log(rates)
+
+    // finds the rate that corresponds to the income that was entered by the user.
+    const parseRates = async (income) => {
+        return rates.find((rate) => {
+            if (!rate.max) {
+                return income >= rate.min
+            }
+            else {
+                return income >= rate.min && income <= rate.max
+            }
+
+        });
     }
 
+
     useEffect(() => {
+        // fetch the new rates everytime year changes
         fetchRates()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [year])
 
-    return (
-        <div>
-            <main className={classes.topContainer}>
-                <div className={classes.toolbar}>
-                </div>
-                <Grid justifyContent="center" alignItems="center" container>
-                    <Grid xs={12} sm={12} md={8} lg={8} item>
-                        <Typography variant="h4"> Income tax calculator</Typography>
-                        <Typography style={{ color: "grey" }} > Find out how much your salary is after tax</Typography>
-                        <Stack style={{ marginTop: '25px' }} direction="row" spacing={2}>
-                            <StyledTextField className={classes.input} size="small" id="income" label="Enter your gross income" variant="standard" />
-                            <Select
-                                labelId="yearLabel"
-                                id="year"
-                                value={year}
-                                label="year"
-                                onChange={handleYearChange}
-                                size="small"
-                                className={classes.input}
-                            >
-                                <MenuItem value={2019}>2019</MenuItem>
-                                <MenuItem value={2020}>2020</MenuItem>
-                                <MenuItem value={2021}>2021</MenuItem>
-                                <MenuItem value={2022}>2022</MenuItem>
-                            </Select>
 
-                            <Button onClick={() => handleCalculate()} className={classes.button} size="small" variant="contained">Calculate</Button>
-                        </Stack>
-                    </Grid>
-                </Grid>
+    // the Loading component will be displayed while fetching the rates
+    const Loading = () => {
+        return (
+            <div>
+                {error.value &&
+                    <Snackbar
+                        style={{ top: '300px', zIndex: '2' }}
+                        open={true}
+                        // onClose={handleCloseAlert}
+                        anchorOrigin={{ horizontal: 'center', vertical: 'top' }}>
+                        <Alert severity="error" sx={{ width: '100%' }}>
+                            <Stack>
+                                <p> Sorry, We are having trouble fetching Tax Ratings.</p>
+                                <p>{error.reason.message}</p>
+                                <Button onClick={() => { window.location.reload(false) }} style={{ background: '#ff000045', color: "black" }} variant="contained" size="small">
+                                    Retry
+                                </Button>
+                            </Stack>
+                        </Alert>
+                    </Snackbar>
+                }
+                <LoadingCircle style={{ zIndex: '1' }}></LoadingCircle>
+            </div >)
+    }
 
-            </main>
+    // the Loaded component will be displayed once the rates are successfully fetched
+    const Loaded = () => {
+        return (
             <main style={{ width: '100%', backgroundColor: '#f6f6f9', padding: "25px" }}>
                 <Grid justifyContent="center" alignItems="center" container>
-                    <Grid xs={12} sm={12} md={6} lg={6} item>
+                    <Grid xs={12} sm={12} md={5} lg={5} item>
                         <Card variant="outlined" sx={{ minWidth: 275 }}>
                             <CardContent>
                                 <Grid container>
@@ -131,7 +166,7 @@ const TaxSummary = () => {
                                                 <ListItem
                                                     secondaryAction={
                                                         <p edge="end" >
-                                                            $52,000
+                                                            $  {summary.grossIncome}
                                                         </p>
                                                     }
                                                 ></ListItem>
@@ -141,7 +176,7 @@ const TaxSummary = () => {
                                                 <ListItem
                                                     secondaryAction={
                                                         <p edge="end" >
-                                                            30%
+                                                            %{summary.rate && summary.rate.rate}
                                                         </p>
                                                     }
                                                 ></ListItem>
@@ -151,7 +186,7 @@ const TaxSummary = () => {
                                                 <ListItem
                                                     secondaryAction={
                                                         <p edge="end" >
-                                                            $22,000
+                                                            $ {summary.totalTax}
                                                         </p>
                                                     }
                                                 ></ListItem>
@@ -162,7 +197,7 @@ const TaxSummary = () => {
                                                 <ListItem
                                                     secondaryAction={
                                                         <p edge="end" >
-                                                            $522,000
+                                                            $  {summary.netPay}
                                                         </p>
                                                     }
                                                 ></ListItem>
@@ -183,11 +218,10 @@ const TaxSummary = () => {
                                                 startAngle={0}
                                                 viewBoxSize={[100, 100]}
                                                 data={[
-                                                    { title: 'Total Tax', value: 27, color: '#E38627' },
-                                                    { title: 'Net Pay', value: 73, color: '#C13C37' }
+                                                    { title: 'Total Tax', value: summary.totalTax ? summary.totalTax : 50, color: '#E38627' },
+                                                    { title: 'Net Pay', value: summary.netPay ? summary.netPay : 50, color: '#78a4cb' }
                                                 ]}
                                             />
-
                                         </div>
                                     </Grid>
                                 </Grid>
@@ -195,9 +229,44 @@ const TaxSummary = () => {
                         </Card>
                     </Grid>
                 </Grid>
-
             </main>
-        </div>
+        )
+    }
+
+    return (
+        <div>
+            <main className={classes.topContainer}>
+                <div className={classes.toolbar}>
+                </div>
+                <Grid justifyContent="center" alignItems="center" container>
+                    <Grid xs={12} sm={12} md={8} lg={8} item>
+                        <Typography variant="h4"> Income tax calculator</Typography>
+                        <Typography style={{ color: "grey" }} > Calculate how much your salary is after tax</Typography>
+                        <Stack style={{ marginTop: '25px' }} direction="row" spacing={2}>
+                            <StyledTextField className={classes.input} size="small" id="income" label="Enter your gross income" variant="standard" />
+                            <Select
+                                disabled={loading}
+                                labelId="yearLabel"
+                                id="year"
+                                value={year}
+                                label="year"
+                                onChange={handleYearChange}
+                                size="small"
+                                className={classes.select}
+                            >
+                                <MenuItem value={2019}>2019</MenuItem>
+                                <MenuItem value={2020}>2020</MenuItem>
+                                <MenuItem value={2021}>2021</MenuItem>
+                                <MenuItem value={2022}>2022</MenuItem>
+                            </Select>
+                            <Button disabled={loading} onClick={() => handleCalculate()} className={classes.button} size="small" variant="contained">Calculate</Button>
+                        </Stack>
+                    </Grid>
+                </Grid>
+            </main>
+            {loading && <Loading></Loading>}
+            {!loading && <Loaded></Loaded>}
+        </div >
     )
 }
 

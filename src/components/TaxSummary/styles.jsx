@@ -14,11 +14,19 @@ export default makeStyles((theme) => ({
     },
     input: {
         background: '#f0e8f1',
-        borderRadius: '20px !important'
+        borderRadius: '20px !important',
+        border: '1px solid #cac6cb'
+    },
+    select: {
+        background: '#f0e8f1',
+        borderRadius: '20px !important',
+        zIndex: '3'
     },
     button: {
         background: "#e34b31 !important",
-        borderRadius: '20px !important'
+        borderRadius: '20px !important',
+        fontSize: 'xx-small !important',
+        fontWeight: 'bold !important'
     },
     summaryBox: {
         padding: "50px",

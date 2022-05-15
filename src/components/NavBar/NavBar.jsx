@@ -1,21 +1,17 @@
 import { AppBar, Grid } from '@material-ui/core'
 import React from 'react'
 import useStyle from './styles';
-import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 
-const NavBar = () => {
+const NavBar = ({ tab, setTab }) => {
     let classes = useStyle()
-    const [value, setValue] = React.useState('one');
+    // const [tab, setTab] = React.useState('1');
 
-    const handleChange = (event, newValue) => {
-        setValue(newValue);
+    const handleTabChange = (event, newValue) => {
+        setTab(newValue);
     };
     return (
         <div>
@@ -24,25 +20,21 @@ const NavBar = () => {
                     <Grid xs={12} sm={12} md={6} lg={6} item>
                         <Toolbar>
                             <Tabs
-                                value={value}
-                                onChange={handleChange}
+                                value={tab}
+                                onChange={handleTabChange}
                                 textColor="secondary"
                                 indicatorColor="secondary"
                                 aria-label="secondary tabs example"
                                 className={classes.tabs}
                             >
-                                <Tab value="one" label="Item One" />
-                                <Tab value="two" label="Item Two" />
-                                <Tab value="three" label="Item Three" />
+                                <Tab value="1" label="Demo" />
+                                <Tab value="2" label="Help" />
                             </Tabs>
-
                             <Typography> Income tax calculator</Typography>
                         </Toolbar>
                     </Grid>
                 </Grid>
-
             </AppBar>
-
         </div>
     )
 }
